@@ -7,12 +7,12 @@ from watchdog.events import FileSystemEventHandler
 
 config_file = "config.ini"
 username = os.environ.get("USERNAME")
-source_directory = f"C:\\Users\\{username}\\AppData\\Local\\Packages\\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\\TempState\ScreenClip"
+source_directory = f"C:\\Users\{username}\AppData\Local\Packages\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\TempState\ScreenClip"
 
 class CustomEventHandler(FileSystemEventHandler):
     def __init__(self):
         super().__init__()
-        self.store = True
+        self.store = False
         self.config_parser = configparser.ConfigParser()
 
     def get_target_directory(self):
