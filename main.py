@@ -37,14 +37,26 @@ class CustomEventHandler(FileSystemEventHandler):
         else:
             os.rename(filename, new_filename)
 
+class AutoSaver():
+    def __init__(self):
+        event_handler = CustomEventHandler()
+        self.observer = Observer()
+        self.observer.schedule(event_handler, source_directory)
+
+    def run(self):
+        self.observer.start()
+
+    def stop(self):
+        self.observer.stop()
+        self.observer.join()
+
+
 if __name__ == "__main__":
-    event_handler = CustomEventHandler()
-    observer = Observer()
-    observer.schedule(event_handler, source_directory)
-    observer.start()
+    autosaver = AutoSaver()
+    autosaver.run()
+
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+        autosaver.stop()
