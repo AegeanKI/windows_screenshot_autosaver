@@ -16,7 +16,7 @@ class MyTaskBarIcon(TaskBarIcon):
     def CreatePopupMenu(self):
         menu = wx.Menu()
         menu.Append(1, 'Show')
-        menu.Append(2, 'Close')
+        menu.Append(2, 'Quit')
         return menu
 
     def taskBarClose(self, event):
@@ -25,8 +25,8 @@ class MyTaskBarIcon(TaskBarIcon):
     def taskBarActivate(self, event):
         if self.frame.IsShown():
             return
-        
-        self.frame.Show()
+        self.frame.Raise()
+        self.frame.ShowWithEffect(wx.SHOW_EFFECT_EXPAND,timeout=0)
 
     def taskBarDeactivate(self, event):
         if not self.frame.IsShown():
@@ -47,9 +47,47 @@ class MyFrame(wx.Frame):
         self.autosaver = AutoSaver()
         self.autosaver.run()
 
-        self.choices = wx.Choice(wx.Panel(self,-1), -1, pos=(20,20))
+
+        # initializing the UI
+        self.main_panel = wx.Panel(self,-1)
+        # add sizer
+        sizer = wx.GridBagSizer(5,5)
+
+        # Text box showing what the app is doing
+        box = wx.StaticBox(self.main_panel,wx.ID_ANY,"介紹")
+        intro = wx.StaticText(box,wx.ID_ANY,"將使用 Windows鍵 + Shift + S 截取的圖案\
+自動儲存到所選取的資料夾位置。\n\n\
+關閉視窗時仍會自動執行，\n如需關閉請到工作列中選Quit將其關閉。",
+                                style=wx.LEFT)
+        intro.Wrap(300)
+        sizer.Add(box, pos=(0, 0), 
+                        span =(3,5),
+                        flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.RIGHT|wx.EXPAND, 
+                        border=5)
+
+
+        # showing target directory text and button
+        self.target_dir_text = wx.TextCtrl(self.main_panel,-1,
+                                            value="",
+                                            style=wx.TE_READONLY)
         self.update_directory_list()
-        self.Bind(wx.EVT_CHOICE, self.select)
+        sizer.Add(self.target_dir_text,pos=(4,0),
+                                        span=(1,4),
+                                        flag=wx.LEFT|wx.BOTTOM|wx.EXPAND, 
+                                        border=15)
+
+        self.update_btn = wx.Button(self.main_panel,-1,
+                                    label="Change")
+        sizer.Add(self.update_btn,pos=(4,4),
+                                flag=wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM,
+                                border=15)
+        self.Bind(wx.EVT_BUTTON, self.click)
+
+        # set sizers
+        sizer.AddGrowableCol(1)
+        sizer.AddGrowableRow(2)
+        self.main_panel.SetSizer(sizer)
+
         self.Show()
 
     def get_target_directory(self):
@@ -59,10 +97,7 @@ class MyFrame(wx.Frame):
 
     def update_directory_list(self):
         target_directory = self.get_target_directory()
-        self.choices.Clear()
-        self.choices.Append(target_directory)
-        self.choices.Append("other")
-        self.choices.SetSelection(0)
+        self.target_dir_text.SetValue(target_directory)
 
     def hide(self, event):
         self.Hide()
@@ -72,9 +107,7 @@ class MyFrame(wx.Frame):
         self.tskic.Destroy()
         self.Destroy()
 
-    def select(self, event):
-        if event.GetSelection() == 0:
-            return
+    def click(self, event):
         dlg = wx.DirDialog (None, "Choose input directory", "", wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dlg.ShowModal() == wx.ID_OK:
             self.config_parser.set("DEFAULT", "target_directory", dlg.GetPath())
