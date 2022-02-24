@@ -38,7 +38,7 @@ class MyFrame(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title, (-1, -1), (290, 280))
         self.SetIcon(wx.Icon('./images/icons/icon_wxWidgets.ico', wx.BITMAP_TYPE_ICO))
-        self.SetSize((350, 250))
+        self.SetSize((400, 250))
         self.tskic = MyTaskBarIcon(self)
         self.Bind(wx.EVT_CLOSE, self.hide)
         self.Centre()
@@ -54,33 +54,25 @@ class MyFrame(wx.Frame):
         sizer = wx.GridBagSizer(5,5)
 
         # Text box showing what the app is doing
-        box = wx.StaticBox(self.main_panel,wx.ID_ANY,"介紹")
-        intro = wx.StaticText(box,wx.ID_ANY,"將使用 Windows鍵 + Shift + S 截取的圖案\
-自動儲存到所選取的資料夾位置。\n\n\
-關閉視窗時仍會自動執行，\n如需關閉請到工作列中選Quit將其關閉。",
-                                style=wx.LEFT)
+        box = wx.StaticBox(self.main_panel, wx.ID_ANY, "介紹")
+        intro_content = ("將使用 Windows鍵 + Shift + S 截取的圖案"
+                         "自動儲存到所選取的資料夾位置。\n\n"
+                         "關閉視窗時仍會自動執行，\n如需關閉請到工作列中選Quit將其關閉。")
+        intro = wx.StaticText(box, wx.ID_ANY, intro_content, style=wx.LEFT)
         intro.Wrap(300)
-        sizer.Add(box, pos=(0, 0), 
-                        span =(3,5),
-                        flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.RIGHT|wx.EXPAND, 
-                        border=5)
-
+        sizer.Add(box, pos=(0, 0), span =(3,5),
+                  flag=wx.TOP | wx.LEFT | wx.BOTTOM | wx.RIGHT | wx.EXPAND, border=5)
 
         # showing target directory text and button
-        self.target_dir_text = wx.TextCtrl(self.main_panel,-1,
-                                            value="",
-                                            style=wx.TE_READONLY)
+        self.target_dir_text = wx.TextCtrl(self.main_panel, -1, value="",
+                                           style=wx.TE_READONLY)
         self.update_directory_list()
-        sizer.Add(self.target_dir_text,pos=(4,0),
-                                        span=(1,4),
-                                        flag=wx.LEFT|wx.BOTTOM|wx.EXPAND, 
-                                        border=15)
+        sizer.Add(self.target_dir_text, pos=(4,0), span=(1,4),
+                  flag=wx.LEFT | wx.BOTTOM | wx.EXPAND, border=15)
 
-        self.update_btn = wx.Button(self.main_panel,-1,
-                                    label="Change")
-        sizer.Add(self.update_btn,pos=(4,4),
-                                flag=wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM,
-                                border=15)
+        self.update_btn = wx.Button(self.main_panel, -1, label="Change")
+        sizer.Add(self.update_btn, pos=(4,4),
+                  flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=15)
         self.Bind(wx.EVT_BUTTON, self.click)
 
         # set sizers
