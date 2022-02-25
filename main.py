@@ -13,6 +13,7 @@ class CustomEventHandler(FileSystemEventHandler):
     def __init__(self):
         super().__init__()
         self.store = False
+        self._paused = False
         self.config_parser = configparser.ConfigParser()
 
     def get_target_directory(self):
@@ -21,6 +22,8 @@ class CustomEventHandler(FileSystemEventHandler):
         return config["target_directory"]
 
     def on_created(self, event):
+        if self._paused:
+            return
         filename = event.src_path
         if not filename.endswith(".png"):
             return
@@ -37,14 +40,21 @@ class CustomEventHandler(FileSystemEventHandler):
         else:
             os.rename(filename, new_filename)
 
+    def pause(self):
+        self._paused = not self._paused
+
 class AutoSaver():
     def __init__(self):
-        event_handler = CustomEventHandler()
+        self.event_handler = CustomEventHandler()
         self.observer = Observer()
-        self.observer.schedule(event_handler, source_directory)
+        self.observer.schedule(self.event_handler, source_directory)
 
-    def run(self):
+    def start(self):
         self.observer.start()
+
+    def pause(self):
+        # self.observer.run()
+        self.event_handler.pause()
 
     def stop(self):
         self.observer.stop()
@@ -53,7 +63,7 @@ class AutoSaver():
 
 if __name__ == "__main__":
     autosaver = AutoSaver()
-    autosaver.run()
+    autosaver.start()
 
     try:
         while True:

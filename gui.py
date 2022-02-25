@@ -2,6 +2,7 @@ import wx
 from wx.adv import TaskBarIcon as TaskBarIcon
 from main import AutoSaver
 import configparser
+from os import path
 
 config_file = "config.ini"
 
@@ -9,17 +10,24 @@ class MyTaskBarIcon(TaskBarIcon):
     def __init__(self, frame):
         TaskBarIcon.__init__(self)
         self.frame = frame
-        self.SetIcon(wx.Icon('./images/bitmaps/aegeanki.png', wx.BITMAP_TYPE_PNG), 'Screenshot Autosaver')
+        path_to_png = path.abspath(path.join(path.dirname(__file__), 'auto.png'))
+        self.SetIcon(wx.Icon(path_to_png, wx.BITMAP_TYPE_PNG), 'Screenshot Autosaver')
         self.Bind(wx.EVT_MENU, self.taskBarActivate, id=1)
-        self.Bind(wx.EVT_MENU, self.taskBarClose, id=2)
+        self.Bind(wx.EVT_MENU, self.taskBarQuit, id=2)
+        self.Bind(wx.EVT_MENU, self.taskBarPause, id=3)
+        self.PAUSED = False
 
     def CreatePopupMenu(self):
-        menu = wx.Menu()
-        menu.Append(1, 'Show')
-        menu.Append(2, 'Quit')
-        return menu
+        self.menu = wx.Menu()
+        self.menu.Append(1, 'Show')
+        self.menu.Append(2, 'Quit')
+        if self.PAUSED:
+            self.menu.Append(3, 'Continue')
+        else:
+            self.menu.Append(3, 'Pause')
+        return self.menu
 
-    def taskBarClose(self, event):
+    def taskBarQuit(self, event):
         self.frame.destroy()
 
     def taskBarActivate(self, event):
@@ -27,6 +35,10 @@ class MyTaskBarIcon(TaskBarIcon):
             return
         self.frame.Raise()
         self.frame.ShowWithEffect(wx.SHOW_EFFECT_EXPAND,timeout=0)
+    
+    def taskBarPause(self,event):
+        self.frame.autosaver.pause()
+        self.PAUSED = not self.PAUSED
 
     def taskBarDeactivate(self, event):
         if not self.frame.IsShown():
@@ -37,7 +49,9 @@ class MyTaskBarIcon(TaskBarIcon):
 class MyFrame(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title, (-1, -1), (290, 280))
-        self.SetIcon(wx.Icon('./images/icons/icon_wxWidgets.ico', wx.BITMAP_TYPE_ICO))
+        path_to_ico = path.abspath(path.join(path.dirname(__file__), 'icon_wxWidgets.ico'))
+        self.SetIcon(wx.Icon(path_to_ico, wx.BITMAP_TYPE_ICO))
+        # self.SetIcon(wx.Icon('./images/icons/icon_wxWidgets.ico', wx.BITMAP_TYPE_ICO))
         self.SetSize((350, 250))
         self.tskic = MyTaskBarIcon(self)
         self.Bind(wx.EVT_CLOSE, self.hide)
@@ -45,7 +59,7 @@ class MyFrame(wx.Frame):
 
         self.config_parser = configparser.ConfigParser()
         self.autosaver = AutoSaver()
-        self.autosaver.run()
+        self.autosaver.start()
 
 
         # initializing the UI
