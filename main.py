@@ -1,25 +1,14 @@
-import os
 import time
-import shutil
-import configparser
+import tools
+from os import walk
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-
-config_file = "config.ini"
-username = os.environ.get("USERNAME")
-source_directory = f"C:\\Users\{username}\AppData\Local\Packages\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\TempState\ScreenClip"
 
 class CustomEventHandler(FileSystemEventHandler):
     def __init__(self):
         super().__init__()
-        self.store = False
+        self._need_to_store = False
         self._paused = False
-        self.config_parser = configparser.ConfigParser()
-
-    def get_target_directory(self):
-        self.config_parser.read(config_file, encoding="utf-8")
-        config = dict(self.config_parser.items("DEFAULT"))
-        return config["target_directory"]
 
     def on_created(self, event):
         if self._paused:
@@ -27,38 +16,35 @@ class CustomEventHandler(FileSystemEventHandler):
         filename = event.src_path
         if not filename.endswith(".png"):
             return
-        self.store = not self.store
-        if not self.store:
+        self._need_to_store = not self._need_to_store
+        if not self._need_to_store:
             return
-
-        target_directory = self.get_target_directory()
-        _, _, files = next(os.walk(target_directory))
-        new_filename = f"{target_directory}\\{len(files)}.png"
         time.sleep(1)
-        if source_directory[0] != target_directory[0]:
-            shutil.move(filename, new_filename)
-        else:
-            os.rename(filename, new_filename)
+        tools.rename_file(filename, self.get_new_filename())
+    
+    def get_new_filename(self):
+        target_directory = tools.get_target_directory()
+        _, _, files = next(walk(target_directory))
+        return f"{target_directory}\{len(files)}.png"
 
-    def pause(self):
+    def toggle_paused(self):
         self._paused = not self._paused
 
 class AutoSaver():
     def __init__(self):
-        self.event_handler = CustomEventHandler()
-        self.observer = Observer()
-        self.observer.schedule(self.event_handler, source_directory)
+        self._event_handler = CustomEventHandler()
+        self._observer = Observer()
+        self._observer.schedule(self._event_handler, tools.get_source_directory())
 
     def start(self):
-        self.observer.start()
+        self._observer.start()
 
-    def pause(self):
-        # self.observer.run()
-        self.event_handler.pause()
+    def toggle_paused(self):
+        self._event_handler.toggle_paused()
 
     def stop(self):
-        self.observer.stop()
-        self.observer.join()
+        self._observer.stop()
+        self._observer.join()
 
 
 if __name__ == "__main__":
@@ -67,6 +53,6 @@ if __name__ == "__main__":
 
     try:
         while True:
-            time.sleep(1)
+            time.sleep(5)
     except KeyboardInterrupt:
         autosaver.stop()
