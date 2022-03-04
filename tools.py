@@ -1,10 +1,11 @@
-from os import environ, rename
+from os import environ, rename, path, walk, remove
 from shutil import move
 from configparser import ConfigParser
+from PIL.ImageGrab import grabclipboard
 
 config_filename = "config.ini"
 
-def get_source_directory():
+def get_monitored_directory():
     username = environ.get("USERNAME")
     return f"C:\\Users\{username}\AppData\Local\Packages\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\TempState\ScreenClip"
 
@@ -29,3 +30,23 @@ def rename_file(old_filename, new_filename):
         move(old_filename, new_filename)
     else:
         rename(old_filename, new_filename)
+
+def get_directory_information(directory_name):
+    return next(walk(directory_name))
+
+def get_absolute_path(filename):
+    return path.abspath(path.join(path.dirname(__file__), filename))
+
+def get_file_from_clipboard(filetype="PNG"):
+    filename = f"tmp.{filetype}"
+    img = grabclipboard()
+    img.save(filename, filetype)
+    return filename
+
+def get_hotkeys():
+    config_parser = get_config_parser()
+    config = dict(config_parser.items("HOTKEYS"))
+    return config
+
+def delete_file(filename):
+    remove(filename)

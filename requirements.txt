@@ -1,2 +1,4 @@
 watchdog
 wxpython
+pyinstaller
+keyboard

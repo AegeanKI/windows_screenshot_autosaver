@@ -2,15 +2,15 @@ import wx
 import tools
 from wx.adv import TaskBarIcon
 from main import AutoSaver
-from os import path
 
 class MyTaskBarIcon(TaskBarIcon):
     def __init__(self, frame):
         super().__init__()
         self._frame = frame
-        self._paused = False
-
-        path_to_png = path.abspath(path.join(path.dirname(__file__), 'auto.png'))
+        self._autosaver = AutoSaver()
+        self._autosaver.start()
+        
+        path_to_png = tools.get_absolute_path('auto.png')
         self.SetIcon(wx.Icon(path_to_png, wx.BITMAP_TYPE_PNG), 'Screenshot Autosaver')
         self.Bind(wx.EVT_MENU, self.acitvate, id=1)
         self.Bind(wx.EVT_MENU, self.toggle_paused, id=2)
@@ -18,13 +18,15 @@ class MyTaskBarIcon(TaskBarIcon):
 
     def CreatePopupMenu(self):
         menu = wx.Menu()
-        menu_list = ['Show', 'Continue' if self._paused else 'Pause', 'Quit']
+        menu_list = ['Show', 'Continue' if self._autosaver.get_status() else 'Pause', 'Quit']
         for idx, name in enumerate(menu_list):
             menu.Append(idx + 1, name)
         return menu
 
     def destroy(self, event):
-        self._frame.destroy()
+        self._autosaver.stop()
+        self._frame.Destroy()
+        self.Destroy()
 
     def acitvate(self, event):
         if self._frame.IsShown():
@@ -33,17 +35,15 @@ class MyTaskBarIcon(TaskBarIcon):
         self._frame.ShowWithEffect(wx.SHOW_EFFECT_EXPAND, timeout=0)
     
     def toggle_paused(self, event):
-        self._frame._autosaver.toggle_paused()
-        self._paused = not self._paused
+        self._autosaver.toggle_paused()
+
 
 class MyFrame(wx.Frame):
     def __init__(self, parent, id, title):
         super().__init__(parent, id, title, (-1, -1), (290, 280))
         self._task_bar_icon = MyTaskBarIcon(self)
-        self._autosaver = AutoSaver()
-        self._autosaver.start()
 
-        path_to_ico = path.abspath(path.join(path.dirname(__file__), 'icon_wxWidgets.ico'))
+        path_to_ico = tools.get_absolute_path('icon_wxWidgets.ico')
         self.SetIcon(wx.Icon(path_to_ico, wx.BITMAP_TYPE_ICO))
         self.SetSize((400, 250))
         self.Bind(wx.EVT_CLOSE, self.hide)
@@ -98,11 +98,6 @@ class MyFrame(wx.Frame):
     def hide(self, event):
         self.Hide()
 
-    def destroy(self):
-        self._autosaver.stop()
-        self._task_bar_icon.Destroy()
-        self.Destroy()
-
     def click(self, event):
         dialog = wx.DirDialog(None, "Choose input directory", "",
                               wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
@@ -120,5 +115,6 @@ class MyApp(wx.App):
         self.SetTopWindow(frame)
         return True
 
-app = MyApp()
-app.MainLoop()
+if __name__ == "__main__":
+    app = MyApp()
+    app.MainLoop()
